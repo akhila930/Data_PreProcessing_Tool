@@ -1,0 +1,34 @@
+2024-12-20 07:28:36,632 - INFO - Starting application in development mode on port 10000
+2024-12-20 07:28:36,665 - WARNING -  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+2024-12-20 07:28:36,666 - INFO -  * Running on http://10.80.62.29:10000/ (Press CTRL+C to quit)
+2024-12-20 07:29:22,024 - INFO - Starting application in development mode on port 10000
+2024-12-20 07:29:22,074 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.80.62.29:10000
+2024-12-20 07:29:22,075 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-20 07:31:50,536 - INFO - Starting application in development mode on port 10000
+2024-12-20 07:31:50,590 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.80.62.29:10000
+2024-12-20 07:31:50,590 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-20 09:32:17,870 - INFO - Starting application in development mode on port 10000
+2024-12-20 09:32:17,944 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.80.62.29:10000
+2024-12-20 09:32:17,944 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-20 10:04:31,964 - INFO - Starting application in development mode on port 10000
+2024-12-20 10:04:32,081 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.80.62.29:10000
+2024-12-20 10:04:32,083 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-20 10:15:45,687 - INFO - Starting application in development mode on port 10000
+2024-12-20 10:15:45,752 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://10.80.62.29:10000
+2024-12-20 10:15:45,752 - INFO - [33mPress CTRL+C to quit[0m

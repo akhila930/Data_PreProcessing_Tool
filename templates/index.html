@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Preprocessing App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body background="{{ url_for('static', filename='images/background.jpg') }}">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#"><b><color="#00008B">Data Preprocessing Hub</b></color></a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="section-card" id="upload-section">
+            <h2>📊 Data Preprocessing Hub</h2>
+            <div class="upload-area">
+                <input type="file" id="fileInput" accept=".csv" class="file-input" onchange="uploadFile()">
+                <div class="upload-text">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drop your CSV file here or click to browse</p>
+                </div>
+                <button class="btn btn-custom mt-3" onclick="uploadFile()">Upload CSV</button>
+            </div>
+        </div>
+
+        <div class="card" id="thresholdCard" style="display: none;">
+            <h2>🎯 Set Column Classification Threshold</h2>
+            <p>Columns with unique values less than the threshold will be considered categorical.</p>
+            <div id="uniqueValuesList"></div>
+            <input type="number" id="thresholdInput" placeholder="Enter threshold value" min="1" class="form-control">
+            <button onclick="classifyColumns()" class="btn btn-custom">Classify Columns</button>
+        </div>
+
+        <div id="main-content" style="display: none;">
+            <div class="section-card">
+                <h3>Column Classification</h3>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4>📈 Numerical Columns</h4>
+                        <ul id="numerical-columns" class="list-group"></ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>📋 Categorical Columns</h4>
+                        <ul id="categorical-columns" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3>🛠️ Data Processing Features</h3>
+                <div class="feature-buttons">
+                    <button class="btn btn-custom" onclick="showSection('data-summary')">📊 Data Summary</button>
+                    <button class="btn btn-custom" onclick="showSection('visualization')">📈 Visualizations</button>
+                    <button class="btn btn-custom" onclick="showSection('missing-values')">🔍 Missing Values</button>
+                    <button class="btn btn-custom" onclick="showSection('outliers')">⚠️ Outliers</button>
+                    <button class="btn btn-custom" onclick="showSection('correlation')">🔗 Correlation</button>
+                    <button class="btn btn-custom" onclick="showSection('dashboard')">📱 Dashboard</button>
+                    <button class="btn btn-custom" onclick="downloadData()">💾 Export Data</button>
+                    <button class="btn btn-custom" onclick="downloadDashboard()">💾 Download Dashboard</button>
+                    <button class="btn btn-custom" onclick="showSection('encoding')">🔄 Categorical Encoding</button>
+                    <button class="btn btn-custom" onclick="showSection('history')">📝 History</button>
+                </div>
+            </div>
+
+            <!-- Data Summary Section -->
+            <div id="data-summary" class="content-section section-card">
+                <h3>📊 Data Summary</h3>
+                <div id="summary-content" class="row"></div>
+            </div>
+
+            <!-- Data Visualization Section -->
+            <div id="visualization" class="content-section section-card">
+                <h3>📈 Data Visualization</h3>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="plot-type" class="form-label">📊 Select Plot Type:</label>
+                        <select class="form-select" id="plot-type" onchange="updatePlotOptions()">
+                            <option value="histogram">📊 Histogram</option>
+                            <option value="bar">📊 Bar Chart</option>
+                            <option value="scatter">📈 Scatter Plot</option>
+                            <option value="box">📦 Box Plot</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="x-column" class="form-label">🔍 Select X Column:</label>
+                        <select class="form-select" id="x-column"></select>
+                    </div>
+                    <div class="col-md-3" id="y-column-container" style="display: none;">
+                        <label for="y-column" class="form-label">🔍 Select Y Column:</label>
+                        <select class="form-select" id="y-column"></select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-custom w-100" onclick="createPlot()">🎨 Generate Plot</button>
+                    </div>
+                </div>
+                <div id="plot-container"></div>
+            </div>
+
+            <!-- Missing Values Section -->
+            <div id="missing-values" class="content-section section-card">
+                <h3>🔍 Handle Missing Values</h3>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="missing-columns" class="form-label">📋 Select Columns:</label>
+                        <select class="form-select" id="missing-columns" multiple></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="missing-strategy" class="form-label">🛠️ Select Strategy:</label>
+                        <select class="form-select" id="missing-strategy">
+                            <option value="mean">📊 Mean</option>
+                            <option value="median">📊 Median</option>
+                            <option value="most_frequent">📊 Mode</option>
+                            <option value="drop">❌ Drop Rows</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-custom w-100" onclick="handleMissingValues()">✨ Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outliers Section -->
+            <div id="outliers" class="content-section section-card">
+                <h3>⚠️ Handle Outliers</h3>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="outlier-columns" class="form-label">📋 Select Columns:</label>
+                        <select class="form-select" id="outlier-columns" multiple></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="outlier-method" class="form-label">🛠️ Select Method:</label>
+                        <select class="form-select" id="outlier-method">
+                            <option value="zscore">📊 Z-Score</option>
+                            <option value="iqr">📊 IQR</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="outlier-treatment" class="form-label">🔧 Treatment:</label>
+                        <select class="form-select" id="outlier-treatment">
+                            <option value="replace">Replace with Mean/Median</option>
+                            <option value="cap">Cap at Bounds</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-custom w-100" onclick="handleOutliers()">✨ Apply</button>
+                    </div>
+                </div>
+                <div id="outlier-result" class="mt-3"></div>
+            </div>
+
+            <!-- Categorical Encoding Section -->
+            <div id="encoding" class="content-section section-card">
+                <h3>🔄 Categorical Encoding</h3>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="encoding-columns" class="form-label">📋 Select Columns:</label>
+                        <select class="form-select" id="encoding-columns" multiple></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="encoding-method" class="form-label">🛠️ Select Method:</label>
+                        <select class="form-select" id="encoding-method">
+                            <option value="label">Label Encoding</option>
+                            <option value="ordinal">Ordinal Encoding</option>
+                            <option value="onehot">One-Hot Encoding</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-custom w-100" onclick="encodeCategorical()">✨ Apply</button>
+                    </div>
+                </div>
+                <div id="encoding-result" class="mt-3"></div>
+            </div>
+
+            <!-- Preprocessing History Section -->
+            <div id="history" class="content-section section-card">
+                <h3>📝 Preprocessing History</h3>
+                <div id="history-content"></div>
+            </div>
+
+            <!-- Correlation Section -->
+            <div id="correlation" class="content-section section-card">
+                <h3>🔗 Correlation Analysis</h3>
+                <button class="btn btn-custom mb-3" onclick="showCorrelationHeatmap()">🎨 Generate Heatmap</button>
+                <div id="correlation-container"></div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section section-card">
+                <h3>📊 Data Analysis Dashboard</h3>
+                <div id="dashboard-loading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generating dashboard... Please wait</p>
+                </div>
+                <div id="dashboard-error" class="alert alert-danger" style="display: none;"></div>
+                <div id="dashboard-content">
+                    <!-- Dataset Info -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Dataset Overview</h5>
+                                    <div id="dataset-info" class="row"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Missing Values</h5>
+                                    <div id="missing-values-plot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Numerical Distributions</h5>
+                                    <div id="numerical-plots"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Categorical Distribution -->
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Categorical Distributions</h5>
+                                    <div id="categorical-plots"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let currentColumns = [];
+
+        // Add function to show/hide sections
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.style.display = 'block';
+                if (sectionId === 'dashboard') {
+                    generateDashboard();
+                }
+            }
+        }
+
+        function generateDashboard() {
+            const loadingDiv = document.getElementById('dashboard-loading');
+            const errorDiv = document.getElementById('dashboard-error');
+            const contentDiv = document.getElementById('dashboard-content');
+            
+            // Show loading, hide error
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            contentDiv.style.opacity = '0.5';
+            
+            fetch('/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Update dataset info
+                    const datasetInfo = document.getElementById('dataset-info');
+                    datasetInfo.innerHTML = `
+                        <div class="col-md-3 text-center">
+                            <h6>Total Rows</h6>
+                            <p class="h4">${data.dataset_info.rows}</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6>Total Columns</h6>
+                            <p class="h4">${data.dataset_info.columns}</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6>Numerical Columns</h6>
+                            <p class="h4">${data.dataset_info.numerical_cols}</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h6>Categorical Columns</h6>
+                            <p class="h4">${data.dataset_info.categorical_cols}</p>
+                        </div>
+                    `;
+                    
+                    // Create missing values plot
+                    const missingValuesPlot = document.getElementById('missing-values-plot');
+                    Plotly.newPlot(missingValuesPlot, [{
+                        x: data.missing_values.columns,
+                        y: data.missing_values.values,
+                        type: 'bar',
+                        marker: {
+                            color: '#4e73df'
+                        }
+                    }], {
+                        margin: { t: 30, b: 80, l: 60, r: 30 },
+                        height: 300,
+                        xaxis: {
+                            tickangle: 45
+                        }
+                    });
+                    
+                    // Create numerical distributions
+                    const numericalPlots = document.getElementById('numerical-plots');
+                    numericalPlots.innerHTML = '';
+                    
+                    Object.entries(data.numerical_dist).forEach(([column, stats]) => {
+                        const plotDiv = document.createElement('div');
+                        plotDiv.style.height = '250px';
+                        plotDiv.style.marginBottom = '20px';
+                        numericalPlots.appendChild(plotDiv);
+                        
+                        const trace1 = {
+                            x: stats.histogram.bins.slice(0, -1),
+                            y: stats.histogram.counts,
+                            type: 'bar',
+                            name: column,
+                            marker: {
+                                color: '#36b9cc'
+                            }
+                        };
+                        
+                        Plotly.newPlot(plotDiv, [trace1], {
+                            title: column,
+                            margin: { t: 30, b: 30, l: 40, r: 30 },
+                            showlegend: false
+                        });
+                    });
+                    
+                    // Create categorical distributions
+                    const categoricalPlots = document.getElementById('categorical-plots');
+                    categoricalPlots.innerHTML = '';
+                    
+                    Object.entries(data.categorical_dist).forEach(([column, dist]) => {
+                        const plotDiv = document.createElement('div');
+                        plotDiv.style.height = '250px';
+                        plotDiv.style.marginBottom = '20px';
+                        categoricalPlots.appendChild(plotDiv);
+                        
+                        const trace1 = {
+                            x: dist.categories,
+                            y: dist.counts,
+                            type: 'bar',
+                            name: column,
+                            marker: {
+                                color: '#1cc88a'
+                            }
+                        };
+                        
+                        Plotly.newPlot(plotDiv, [trace1], {
+                            title: column,
+                            margin: { t: 30, b: 80, l: 40, r: 30 },
+                            xaxis: {
+                                tickangle: 45
+                            },
+                            showlegend: false
+                        });
+                    });
+                    
+                    // Hide loading, show content
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.opacity = '1';
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = 'Error generating dashboard: ' + error.message;
+                    contentDiv.style.opacity = '1';
+                });
+        }
+
+        // Update the data summary function
+        function updateDataSummary() {
+            showLoading('summary-content');
+            fetch('/summary')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showAlert('❌ ' + data.error, 'error');
+                        return;
+                    }
+                    const summaryContent = document.getElementById('summary-content');
+                    summaryContent.innerHTML = '';
+
+                    // Dataset Info
+                    const infoCard = document.createElement('div');
+                    infoCard.className = 'col-12 mb-4';
+                    infoCard.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>📊 Dataset Information</h4>
+                                <p>Rows: ${data.dataset_info.rows}</p>
+                                <p>Columns: ${data.dataset_info.columns}</p>
+                                <p>Memory Usage: ${data.dataset_info.memory_usage}</p>
+                            </div>
+                        </div>
+                    `;
+                    summaryContent.appendChild(infoCard);
+
+                    // Column Summaries
+                    Object.entries(data.column_summary).forEach(([column, summary]) => {
+                        const colCard = document.createElement('div');
+                        colCard.className = 'col-md-6 mb-4';
+                        let summaryHTML = `
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4>📋 ${column}</h4>
+                                    <p>Type: ${summary.dtype}</p>
+                                    <p>Missing Values: ${summary.missing_values} (${summary.missing_percentage})</p>
+                                    <p>Unique Values: ${summary.unique_values}</p>
+                        `;
+
+                        if (summary.mean !== undefined) {
+                            summaryHTML += `
+                                <hr>
+                                <h5>📈 Statistics</h5>
+                                <p>Mean: ${summary.mean}</p>
+                                <p>Std: ${summary.std}</p>
+                                <p>Min: ${summary.min}</p>
+                                <p>25%: ${summary['25%']}</p>
+                                <p>50%: ${summary['50%']}</p>
+                                <p>75%: ${summary['75%']}</p>
+                                <p>Max: ${summary.max}</p>
+                            `;
+                        }
+
+                        if (summary.top_categories) {
+                            summaryHTML += `
+                                <hr>
+                                <h5>📊 Top Categories</h5>
+                                <ul>
+                                    ${Object.entries(summary.top_categories)
+                                        .map(([cat, count]) => `<li>${cat}: ${count}</li>`)
+                                        .join('')}
+                                </ul>
+                            `;
+                        }
+
+                        summaryHTML += `
+                                </div>
+                            </div>
+                        `;
+                        colCard.innerHTML = summaryHTML;
+                        summaryContent.appendChild(colCard);
+                    });
+                })
+                .catch(error => {
+                    showAlert('❌ Error fetching summary: ' + error, 'error');
+                });
+        }
+
+        // Update visualization function
+        function createPlot() {
+            const plotType = document.getElementById('plot-type').value;
+            const xColumn = document.getElementById('x-column').value;
+            const yColumn = document.getElementById('y-column').value;
+
+            showLoading('plot-container');
+            fetch('/plot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    plot_type: plotType,
+                    x_column: xColumn,
+                    y_column: yColumn
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                const plotData = JSON.parse(data.plot);
+                Plotly.newPlot('plot-container', plotData.data, plotData.layout);
+                showAlert('✅ Plot generated successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('❌ Error creating plot: ' + error, 'error');
+            });
+        }
+
+        // Update missing values function
+        function handleMissingValues() {
+            const columns = Array.from(document.getElementById('missing-columns').selectedOptions).map(opt => opt.value);
+            const strategy = document.getElementById('missing-strategy').value;
+
+            if (columns.length === 0) {
+                showAlert('⚠️ Please select at least one column!', 'error');
+                return;
+            }
+
+            fetch('/handle_missing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    columns: columns,
+                    strategy: strategy
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                showAlert('✅ ' + data.message, 'success');
+                updateDataSummary();
+            })
+            .catch(error => {
+                showAlert('❌ Error handling missing values: ' + error, 'error');
+            });
+        }
+
+        // Update outliers function
+        function handleOutliers() {
+            const columns = Array.from(document.getElementById('outlier-columns').selectedOptions).map(opt => opt.value);
+            const method = document.getElementById('outlier-method').value;
+            const treatment = document.getElementById('outlier-treatment').value;
+
+            if (columns.length === 0) {
+                showAlert('⚠️ Please select at least one column!', 'error');
+                return;
+            }
+
+            fetch('/handle_outliers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    columns: columns,
+                    method: method,
+                    treatment: treatment
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                const resultDiv = document.getElementById('outlier-result');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5>✅ Outliers Handled Successfully</h5>
+                        <p>${data.message}</p>
+                    </div>
+                `;
+                showAlert('✅ ' + data.message, 'success');
+                updatePreprocessingHistory();
+            })
+            .catch(error => {
+                showAlert('❌ Error handling outliers: ' + error, 'error');
+            });
+        }
+
+        // Add download dashboard function
+        function downloadDashboard() {
+            const dashboardContent = document.getElementById('dashboard-content');
+            
+            // Show loading message
+            showAlert('📸 Capturing dashboard...', 'info');
+            
+            // Set temporary styles for better image capture
+            const originalPadding = dashboardContent.style.padding;
+            const originalBackground = dashboardContent.style.background;
+            dashboardContent.style.padding = '20px';
+            dashboardContent.style.background = 'white';
+            
+            // Use html2canvas with better settings
+            html2canvas(dashboardContent, {
+                scale: 2, // Higher resolution
+                useCORS: true, // Handle cross-origin images
+                logging: false, // Disable logging
+                backgroundColor: '#ffffff', // White background
+                windowWidth: dashboardContent.scrollWidth,
+                windowHeight: dashboardContent.scrollHeight,
+                onclone: function(clonedDoc) {
+                    // Ensure all plots are visible in clone
+                    clonedDoc.querySelectorAll('.js-plotly-plot').forEach(plot => {
+                        plot.style.visibility = 'visible';
+                    });
+                }
+            }).then(canvas => {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'dashboard_' + new Date().toISOString().split('T')[0] + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // Restore original styles
+                dashboardContent.style.padding = originalPadding;
+                dashboardContent.style.background = originalBackground;
+                
+                showAlert('✅ Dashboard downloaded successfully!', 'success');
+            }).catch(error => {
+                console.error('Error downloading dashboard:', error);
+                showAlert('❌ Error downloading dashboard. Please try again.', 'error');
+                
+                // Restore original styles
+                dashboardContent.style.padding = originalPadding;
+                dashboardContent.style.background = originalBackground;
+            });
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('⚠️ Please select a file first!', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                currentColumns = data.columns;
+                populateColumnSelects();
+                document.getElementById('thresholdCard').style.display = 'block';
+                showAlert('✅ File uploaded successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('❌ Error uploading file: ' + error, 'error');
+            });
+        }
+
+        function populateColumnSelects() {
+            const selects = ['x-column', 'y-column', 'missing-columns', 'outlier-columns', 'encoding-columns'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '';
+                currentColumns.forEach(column => {
+                    const option = document.createElement('option');
+                    option.value = column;
+                    option.textContent = column;
+                    select.appendChild(option);
+                });
+            });
+            updateDataSummary();
+        }
+
+        function classifyColumns() {
+            const threshold = document.getElementById('thresholdInput').value;
+            if (!threshold) {
+                showAlert('⚠️ Please enter a threshold value', 'error');
+                return;
+            }
+
+            fetch('/classify_columns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    threshold: parseInt(threshold)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+
+                // Display numerical and categorical columns
+                const numericalList = document.getElementById('numerical-columns');
+                const categoricalList = document.getElementById('categorical-columns');
+                
+                numericalList.innerHTML = '';
+                categoricalList.innerHTML = '';
+                
+                data.numerical_columns.forEach(col => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `📈 ${col}`;
+                    numericalList.appendChild(li);
+                });
+                
+                data.categorical_columns.forEach(col => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `📋 ${col}`;
+                    categoricalList.appendChild(li);
+                });
+
+                document.getElementById('main-content').style.display = 'block';
+                showAlert('✅ Columns classified successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('❌ Error classifying columns: ' + error, 'error');
+            });
+        }
+
+        function showCorrelationHeatmap() {
+            showLoading('correlation-container');
+            fetch('/correlation')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                const plotData = JSON.parse(data.plot);
+                Plotly.newPlot('correlation-container', plotData.data, plotData.layout);
+                showAlert('✅ Correlation heatmap created successfully!', 'success');
+            })
+            .catch(error => {
+                showAlert('❌ Error creating correlation heatmap: ' + error, 'error');
+            });
+        }
+
+        function downloadData() {
+            window.location.href = '/download';
+            showAlert('✅ Download started!', 'success');
+        }
+
+        function showLoading(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading... Please wait</p>
+                </div>
+            `;
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function updatePlotOptions() {
+            const plotType = document.getElementById('plot-type').value;
+            const yColumnContainer = document.getElementById('y-column-container');
+            yColumnContainer.style.display = plotType === 'scatter' ? 'block' : 'none';
+        }
+
+        // Add categorical encoding function
+        function encodeCategorical() {
+            const columns = Array.from(document.getElementById('encoding-columns').selectedOptions).map(opt => opt.value);
+            const method = document.getElementById('encoding-method').value;
+
+            if (columns.length === 0) {
+                showAlert('⚠️ Please select at least one column!', 'error');
+                return;
+            }
+
+            fetch('/encode_categorical', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    columns: columns,
+                    method: method
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('❌ ' + data.error, 'error');
+                    return;
+                }
+                const resultDiv = document.getElementById('encoding-result');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5>✅ Encoding Applied Successfully</h5>
+                        <p>${data.message}</p>
+                        <p>New columns created: ${data.encoded_columns.join(', ')}</p>
+                    </div>
+                `;
+                showAlert('✅ ' + data.message, 'success');
+                updatePreprocessingHistory();
+            })
+            .catch(error => {
+                showAlert('❌ Error applying encoding: ' + error, 'error');
+            });
+        }
+
+        // Add function to update preprocessing history
+        function updatePreprocessingHistory() {
+            fetch('/preprocessing_history')
+                .then(response => response.json())
+                .then(data => {
+                    const historyContent = document.getElementById('history-content');
+                    historyContent.innerHTML = '';
+                    
+                    data.history.forEach((step, index) => {
+                        const stepCard = document.createElement('div');
+                        stepCard.className = 'card mb-3';
+                        let stepHTML = `
+                            <div class="card-body">
+                                <h5 class="card-title">Step ${index + 1}: ${step.action}</h5>
+                                <p>Method: ${step.method}</p>
+                                <p>Columns: ${step.columns.join(', ')}</p>
+                        `;
+
+                        if (step.affected_rows !== undefined) {
+                            stepHTML += `<p>Affected Rows: ${step.affected_rows}</p>`;
+                        }
+                        if (step.encoded_columns) {
+                            stepHTML += `<p>New Columns: ${step.encoded_columns.join(', ')}</p>`;
+                        }
+
+                        stepHTML += '</div>';
+                        stepCard.innerHTML = stepHTML;
+                        historyContent.appendChild(stepCard);
+                    });
+                })
+                .catch(error => {
+                    showAlert('❌ Error updating history: ' + error, 'error');
+                });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+</body>
+</html>

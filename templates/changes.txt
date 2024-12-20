@@ -1,0 +1,86 @@
+1. Add this section just before the Download Section:
+
+<!-- Categorical Encoding Section -->
+<div class="section">
+    <h3><i class="fas fa-code me-2"></i>Encode Categorical Columns</h3>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Encoding Method</label>
+            <select id="encodingMethod" class="form-select">
+                <option value="onehot">One-Hot Encoding</option>
+                <option value="label">Label Encoding</option>
+                <option value="ordinal">Ordinal Encoding</option>
+            </select>
+            <div class="form-text mt-2">
+                <small>
+                    <strong>One-Hot:</strong> Creates binary columns for each category<br>
+                    <strong>Label:</strong> Assigns unique integers to categories<br>
+                    <strong>Ordinal:</strong> Assigns ordered integers based on category order
+                </small>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Select Categorical Columns</label>
+            <select id="categoricalColumns" class="form-select" multiple></select>
+        </div>
+    </div>
+    <button onclick="encodeCategorical()" class="btn btn-custom-primary mt-3">
+        <i class="fas fa-magic me-2"></i>Encode Columns
+    </button>
+</div>
+
+2. Update the updateColumnSelects function to include categoricalColumns:
+
+function updateColumnSelects() {
+    console.log('Updating column selects with columns:', columns);
+    const selects = ['column1', 'column2', 'missingColumns', 'categoricalColumns'];
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        columns.forEach(column => {
+            const option = document.createElement('option');
+            option.value = column;
+            option.textContent = column;
+            select.appendChild(option);
+        });
+    });
+}
+
+3. Add this function just before the closing </script> tag:
+
+async function encodeCategorical() {
+    const method = document.getElementById('encodingMethod').value;
+    const columns = Array.from(document.getElementById('categoricalColumns').selectedOptions).map(opt => opt.value);
+    
+    if (columns.length === 0) {
+        alert('Please select at least one column to encode');
+        return;
+    }
+
+    try {
+        const response = await fetch('/encode_categorical', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                method: method,
+                columns: columns
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Update the column lists with the new columns
+            columns = [...data.categorical_columns, ...data.numerical_columns];
+            updateColumnSelects();
+            alert('Categorical columns encoded successfully!');
+        } else {
+            throw new Error(data.error || 'Failed to encode categorical columns');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    }
+}
